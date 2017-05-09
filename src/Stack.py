@@ -1,5 +1,5 @@
 
-
+import types
 #namespace App
 
 class Stack:
@@ -24,10 +24,8 @@ class Stack:
 
 
 
-class GeneratorStack :
-	implements = [ Stack
-]
-	stack = {}
+class GeneratorStack(Stack):
+	stack = []
 
 	"""
 	push item(s) onto stack
@@ -38,14 +36,14 @@ class GeneratorStack :
 		#print_r( input ); #debug
 		if   not  input :
 			return False
-		if  isinstance(input, (list,tuple,dict)) or .Generator in { t.__name__ for t in input.__class__.mro() } :
+		if  isinstance(input, (list,tuple,dict)) or isinstance(input, types.GeneratorType):
 
 			success = 0
 			for inp in input:
-				success += array_push( self.stack, inp )
+				self.stack.append( input )
 			return success
 
-		return array_push( self.stack, input )
+		return self.stack.append( input )
 
 
 	"""
@@ -56,9 +54,11 @@ class GeneratorStack :
 	"""
 	def pop(self, n = 1):
 
-		for( i = 0; i < n; i+=1 )
+		i = 0
+		while i < n:
 
-			yield array_pop( self.stack )
+			yield self.stack.pop()
+			i += 1
 
 
 
@@ -67,7 +67,7 @@ class GeneratorStack :
 	"""
 	def clear(self):
 
-		self.stack = {}
+		self.stack = []
 
 
 	"""
@@ -91,7 +91,7 @@ class GeneratorStack :
 	"""
 	def peek(self):
 
-		return end( self.stack )
+		return self.stack[-1]
 
 
 	"""
@@ -99,10 +99,9 @@ class GeneratorStack :
 	"""
 	def __str__(self):
 
-		return implode(' ', self.stack)
+		return ' '.join([ str(s) for s in self.stack])
 
 
-from GeneratorStack import GeneratorStack
 class NonCommutativeStack(GeneratorStack):
 
 	"""
@@ -112,8 +111,12 @@ class NonCommutativeStack(GeneratorStack):
 	def pop(self, n = 1):
 
 		offset = self.size() - n
-		for( i=0 ; i < n; i+=1 )
-			yield fro array_splice( self.stack, offset, 1 )
+		i = 0
+		while i < n:
+			removed = self.stack[offset]
+			del self.stack[offset]
+			yield removed
+			i += 1
 		#yield fro array_reverse( list( super(Stack, self).pop(n) ) )
 
 

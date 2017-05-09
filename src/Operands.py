@@ -2,15 +2,9 @@
 
 #namespace App.Operands
 
-import App.Operand
-import App.Operator
-
-import App.Notations.Decimal
-import App.Notations.Octal
-import App.Notations.Hexadecimal
-import App.Notations.Binary
-import App.Notations.Alphabetic
-import App.Notations.Degrees
+from Symbol import Operand
+from Symbol import Operator
+import Notations
 
 class Scalar(Operand):
 
@@ -19,7 +13,7 @@ class Scalar(Operand):
 	"""
 	def getValue(self):
 
-		return self.symbol * 1
+		return float(self.symbol) if '.' in self.symbol else int(self.symbol)
 
 
 	"""
@@ -27,22 +21,22 @@ class Scalar(Operand):
 	"""
 	def sign(self):
 
-		return self.getValue() >'+' if  0 else '-'
+		return '+' if self.getValue() > 0 else '-'
 
 
-	def operate(self, Operator op, other = None):
+	def operate(self, op, other = None):
 
-		if  Complex in { t.__name__ for t in other.__class__.mro() } :
+		if isinstance(other, Complex):
 			ret = op.scalarComplex( self, other )
 
 		if  op.num_operands == 1 :
 			ret = op.scalar( self )
-		elif  Scalar in { t.__name__ for t in other.__class__.mro() } :
+		elif isinstance(other, Scalar):
 
 			ret = op.scalar( self, other )
 
 
-		if  Operand in { t.__name__ for t in ret.__class__.mro() } :
+		if isinstance(other, Operand):
 			return ret
 
 		scalar = Operands( ret )
@@ -52,7 +46,7 @@ class Scalar(Operand):
 
 	def bnot(self):
 
-		return ~ self()
+		return not self()
 
 
 
@@ -60,8 +54,8 @@ class BaseScalar(Scalar):
 
 	def getValue(self):
 
-		list( full, sign, prefix, value ) = self.__class__.regex( self.symbol )
-		return (sign.base_convert( value, self.__class__.base, 10 )) * 1
+		( full, sign, prefix, value ) = self.__class__.regex( self.symbol )
+		return (sign+base_convert( value, self.__class__.base, 10 )) * 1
 
 
 	def setValue(self, value):
@@ -75,24 +69,25 @@ class BaseScalar(Scalar):
 		bin_width = ceil(log(self.__class__.base ** base_width, 2))
 		mask = (( 1 << bin_width ) - 1)
 		base_class = get_class(self)
-		negated = base_convert( ~ self() & mask, 10, self.__class__.base )
+		negated = base_convert( not self() & mask, 10, self.__class__.base )
 		symbol = self.__class__.prefix.str_pad( negated, base_width, '0', STR_PAD_LEFT)
 		return base_class( symbol )
 
 
-from Scalar     { use Decimal; } import Scalar     { use Decimal; }
-class DecScalar(Scalar     { use Decimal; }):
-class OctScalar(BaseScalar { use Octal; }):
-class HexScalar(BaseScalar { use Hexadecimal; }):
-class BinScalar(BaseScalar { use Binary; }):
-from Scalar import Scalar
-class DegScalar(Scalar):
+class DecScalar(Scalar, Notations.Decimal):
+	pass
+class OctScalar(BaseScalar, Notations.Octal):
+	pass
+class HexScalar(BaseScalar, Notations.Hexadecimal):
+	pass
+class BinScalar(BaseScalar, Notations.Binary):
+	pass
 
-	use Degrees
+class DegScalar(Scalar, Notations.Degrees):
 	def getValue(self):
 
 		raw_part = self.symbol.replace('deg',''); #substr( self.symbol, len(self.__class__.prefix) )
-		return deg2rad( raw_part )
+		return math.radians( raw_part )
 
 	def setValue(self, value):
 
@@ -101,26 +96,31 @@ class DegScalar(Scalar):
 
 
 
-class Constant(Scalar):
-
-	use Alphabetic
-	def operate(self, Operator op, other = None):
+class Constant(Scalar, Notations.Alphabetic):
+	def operate(self, op, other = None):
 
 		doppelganger = DecScalar( self.getValue() )
 		return doppelganger.operate(op, other)
 
 
 
-class Pi    (Constant {  def getValue(self)): { return M_PI; } }
-class Exp   (Constant {  def getValue(self)): { return M_E; } }
-class Nan   (Constant {  def getValue(self)): { return NAN; } }
-class PosInf(Constant {  def getValue(self)): { return INF; } }
-class NegInf(Constant {  def getValue(self)): { return -INF; } }
-from Operand import Operand
-class Complex(Operand):
+class Pi    (Constant):
+	def getValue(self):
+		return M_PI
+class Exp   (Constant):
+	def getValue(self):
+		return M_E
+class Nan   (Constant):
+	def getValue(self):
+		return NAN
+class PosInf(Constant):
+	def getValue(self):
+		return INF
+class NegInf(Constant):
+	def getValue(self):
+		return -INF
 
-	use .App.Notations.Complex
-
+class Complex(Operand, Notations.Complex):
 	real = None
 	imag = None
 
@@ -145,7 +145,7 @@ class Complex(Operand):
 			self.real = DecScalar( real )
 			self.imag = DecScalar( imag )
 
-		elif  Scalar in [ t.__name__ for t in real.__class__.mro() ] and Scalar in { t.__name__ for t in imag.__class__.mro() } :
+		elif isinstance(other, Scalar):
 
 			self.real = real
 			self.imag = imag
@@ -164,7 +164,7 @@ class Complex(Operand):
 
 		matches = self.__class__.regex(string)
 		real = matches[2] or 0
-		imag =  ( matches[3] ?? '' .replace('+','') + (matches[4] or 1))
+		imag =  ( matches[3] or '' ).replace('+','') + (matches[4] or 1)
 		self.real = DecScalar( real * 1 )
 		self.imag = DecScalar( imag * 1 )
 
@@ -178,16 +178,16 @@ class Complex(Operand):
 			elif  self.imag() == -1 :
 				return "-i"
 			else:
-				return self.imag."i"
+				return self.imag+"i"
 
 	
-		str.self.real
+		str = ""+self.real
 		if  self.imag == '1' :
 			str += "+i"
 		elif  self.imag == '-1' :
 			str += "-i"
 		elif  self.imag() != 0 :
-			str +='+'  if  (self.imag() >= 0 else  '').self.imag."i"
+			str += ('+' if self.imag() >= 0 else '')+self.imag+"i"
 		return str
 
 
@@ -217,14 +217,14 @@ class Complex(Operand):
 				complex = op.complex( self )
 
 
-		elif  Complex in { t.__name__ for t in other.__class__.mro() } :
+		elif isinstance(other, Complex):
 
 			if  op.implements('BinaryComplex') :
 
 				complex = op.complex( self, other )
 
 
-		elif  Scalar in { t.__name__ for t in other.__class__.mro() } :
+		elif isinstance(other, Scalar):
 
 			if  op.implements('BinaryComplexScalar') :
 
@@ -235,19 +235,16 @@ class Complex(Operand):
 		if   not  complex :
 			return False
 
-		if  Operand in { t.__name__ for t in complex.__class__.mro() } :
+		if isinstance(other, Operand):
 			return complex
 
-		return new Complex( new DecScalar(complex[0]), new DecScalar(complex[1]) )
+		return Complex( DecScalar(complex[0]), DecScalar(complex[1]) )
 
 
-from Complex import Complex
-class PolarComplex(Complex):
-
-	use .App.Notations.PolarComplex
+class PolarComplex(Complex, Notations.PolarComplex):
 	def __init__(self, mag, arg=None):
 
-		if  is_string( mag ) and arg === None :
+		if  is_string( mag ) and arg is None :
 
 			self.setValue(mag)
 
@@ -260,21 +257,21 @@ class PolarComplex(Complex):
 	def setValue(self, string):
 
 		matches = self.__class__.regex(string)
-		self.setMagArg( matches[1], deg2rad(matches[2]) )
+		self.setMagArg( matches[1], math.radians(matches[2]) )
 
 
 	def setMagArg(self, mag, arg):
 
 		real = mag * cos( arg )
 		imag = mag * sin( arg )
-		if( abs(real) < 1e-10 ) real = 0
-		if( abs(imag) < 1e-10 ) imag = 0
+		if( abs(real) < 1e-10 ):real = 0
+		if( abs(imag) < 1e-10 ):imag = 0
 		self.real = DecScalar(real)
 		self.imag = DecScalar(imag)
 
 
 	def __str__(self):
 
-		return self.mag()."cis".rad2deg(self.arg())."deg"
+		return self.mag()+"cis"+math.degrees(self.arg())+"deg"
 
 

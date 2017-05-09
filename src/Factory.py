@@ -1,24 +1,23 @@
-
+# -*- encoding: utf-8 -*-
 
 #namespace App
 
-import App.Notations.Octal
-import App.Notations.Decimal
-import App.Notations.Hexadecimal
-import App.Notations.Binary
-import App.Notations.Complex
-import App.Notations.PolarComplex
-import App.Notations.Degrees
-import App.Notations.Alphabetic
+from Notations import Octal
+from Notations import Decimal
+from Notations import Hexadecimal
+from Notations import Binary
+from Notations import Complex
+from Notations import PolarComplex
+from Notations import Degrees
+from Notations import Alphabetic
 
 class Factory:
 
 	@classmethod
 	def make(cls, string):
+		pass
 
-class SymbolFactory (object):
-	implements = [ Factory
-]
+class SymbolFactory (object, Factory):
 	valids = None
 	namespace = None
 
@@ -28,11 +27,12 @@ class SymbolFactory (object):
 	"""
 	@classmethod
 	def make(cls, string):
-		if   not  cls.isValid( string ) :
-			raise Exception("Invalid operator: ".string)
+		if not cls.isValid( string ) :
+			raise Exception("Invalid operator: "+string)
 
-		name = self.__class__.lookupClassname(string)
-		class_name = self.__class__.namespace.".".name
+		name = cls.lookupClassname(string)
+		module = __import__(cls.namespace)
+		class_name = getattr(module, name)
 		return class_name(string)
 
 
@@ -42,7 +42,7 @@ class SymbolFactory (object):
 	"""
 	@classmethod
 	def lookupClassname(cls, string):
-		return  cls.valids{ string } .capitalize()
+		return  cls.valids[ string ].capitalize()
 
 
 	"""
@@ -52,7 +52,7 @@ class SymbolFactory (object):
 	"""
 	@classmethod
 	def isValid(cls, string):
-		return ( string in  array_keys(cls.valids) )
+		return string in cls.valids.keys()
 
 
 	"""
@@ -60,13 +60,12 @@ class SymbolFactory (object):
 	"""
 	@classmethod
 	def reference(cls):
-		return array_keys( cls.valids )
+		return cls.valids.keys()
 
 
-from SymbolFactory import SymbolFactory
 class OperatorFactory(SymbolFactory):
 
-	namespace = "App.Operators"
+	namespace = "Operators"
 	valids = {
 		'+':'plus',
 		'-':'minus',
@@ -110,13 +109,12 @@ class OperatorFactory(SymbolFactory):
 		#'>>':'rotateR',
 	}
 
-from SymbolFactory import SymbolFactory
 class OperandFactory(SymbolFactory):
 
-	namespace = "App.Operands"
+	namespace = "Operands"
 	valids = {
 		'pi':'Pi',
-		'π':'Pi',
+		u'π':'Pi',
 		'e':'Exp',
 		'i':'Complex',
 		'nan':'Nan',
@@ -126,32 +124,48 @@ class OperandFactory(SymbolFactory):
 
 	@classmethod
 	def isValid(cls, string):
-		return self.__class__.isDecimal(string) or cls.isOctal(string)
-			|| self.__class__.isHex(string)     or self.__class__.isBinary(string)
-			|| self.__class__.isDegrees(string)
-			|| self.__class__.isComplex(string) or cls.isPolarComplex(string)
-			|| super(Factory, self).isValid(string)
+		return cls.isDecimal(string) or cls.isOctal(string) \
+			or cls.isHex(string)     or cls.isBinary(string) \
+			or cls.isDegrees(string) \
+			or cls.isComplex(string) or cls.isPolarComplex(string) \
+			or string in cls.valids.keys()
 
 
 	@classmethod
 	def lookupClassname(cls, string):
-		if(cls.isDecimal(string)) return "DecScalar"
-		if(self.__class__.isBinary (string)) return "BinScalar"
-		if(self.__class__.isOctal  (string)) return "OctScalar"
-		if(self.__class__.isHex    (string)) return "HexScalar"
-		if(self.__class__.isComplex(string)) return "Complex"
-		if(self.__class__.isPolarComplex(string)) return "PolarComplex"
-		if(self.__class__.isDegrees(string)) return "DegScalar"
+		if(cls.isDecimal(string)):return "DecScalar"
+		if(cls.isBinary (string)):return "BinScalar"
+		if(cls.isOctal  (string)):return "OctScalar"
+		if(cls.isHex    (string)):return "HexScalar"
+		if(cls.isComplex(string)):return "Complex"
+		if(cls.isPolarComplex(string)):return "PolarComplex"
+		if(cls.isDegrees(string)):return "DegScalar"
 		if cls.isAlphabetic(string):
-		return super(Factory, self).lookupClassname(string)
+			return super(SymbolFactory, self).lookupClassname(string)
 
 
-	static def isHex(self, string):     { return Hexadecimal.regex(string); }
-	static def isBinary(self, string):  { return Binary.regex(string); }
-	static def isOctal(self, string):   { return Octal.regex(string); }
-	static def isDecimal(self, string): { return Decimal.regex(string); }
-	static def isComplex(self, string): { return Complex.regex(string); }
-	static def isPolarComplex(self, string): { return PolarComplex.regex(string); }
-	static def isDegrees(self, string): { return Degrees.regex(string); }
-	static def isAlphabetic(self, string): { return Alphabetic.regex(string); }
+	@classmethod
+	def isHex(self, string):
+		return Hexadecimal.regex(string)
+	@classmethod
+	def isBinary(self, string):
+		return Binary.regex(string)
+	@classmethod
+	def isOctal(self, string):
+		return Octal.regex(string)
+	@classmethod
+	def isDecimal(self, string):
+		return Decimal.regex(string)
+	@classmethod
+	def isComplex(self, string):
+		return Complex.regex(string)
+	@classmethod
+	def isPolarComplex(self, string):
+		return PolarComplex.regex(string)
+	@classmethod
+	def isDegrees(self, string):
+		return Degrees.regex(string)
+	@classmethod
+	def isAlphabetic(self, string):
+		return Alphabetic.regex(string)
 

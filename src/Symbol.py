@@ -1,18 +1,19 @@
 
-
+import types
 #namespace App
+from Notations import Notation
 
 class Symbol(object):
 
 	symbol = None
-	required_interface
+	required_interface = ""
 
 	"""
 	@param symbol string representation/value of self symbol
 	"""
 	def __init__(self, symbol):
 
-		assert(  not  Symbol in { t.__name__ for t in symbol.__class__.mro() } )
+		assert(  not  isinstance(symbol, Symbol) )
 		self.symbol = symbol
 
 
@@ -23,12 +24,12 @@ class Symbol(object):
 	@return boolean True if implemented or extended, False otherwise
 	"""
 	def implements(self, string):
-	}
+
 		namespace = get_class(self)
-		names = explode(".", namespace)
+		names = namespace.split('.')
 		array_pop( names )
 		names.append(string)
-		interface = implode(".", names)
+		interface = ".".join(names)
 		self.__class__.required_interface = string
 		return interface in { t.__name__ for t in self.__class__.mro() }
 
@@ -40,7 +41,7 @@ class Symbol(object):
 
 	def __str__(self):
 
-		return "".self.symbol
+		return str(self.symbol)
 
 
 
@@ -54,8 +55,8 @@ class Operator(Symbol):
 	"""
 	def __call(self, func, args):
 
-		if  property_exists( self, func ) :
-			return (getattr(self,func)(*args))
+		if  hasattr( self, func ) :
+			return getattr(self,func)(*args)
 		else:
 			raise Exception("Attribute not found: " + func)
 
@@ -70,9 +71,11 @@ class Operator(Symbol):
 		#if  isinstance( a , (list,tuple,dict)) and len( a ) == 1 :
 		#	a = reset(a)
 		if  isinstance( a , (list,tuple,dict)) :
-			yield fro a
-		elif  .Generator in { t.__name__ for t in a.__class__.mro() } :
-			yield fro a
+			for b in a:
+				yield b
+		elif isinstance(a, types.GeneratorType):
+			for b in a:
+				yield b
 		else:
 			yield a
 
@@ -82,13 +85,11 @@ class Operator(Symbol):
 	@param operands iterable of operand(s)
 	@return Operand
 	"""
-	def __invoke(self, *operands):
-	pass
+	def __call__(self, *operands):
+		pass
 
 
-class Operand(Symbol ):
-	implements = [ .App.Notations.Notation
-]
+class Operand(Symbol, Notation):
 	"""
 	@param symbol string representation/value of self symbol
 	"""
@@ -105,14 +106,14 @@ class Operand(Symbol ):
 	@return Operand the result of running the operation
 	"""
 	def operate(self,   op, other ):
-	pass
+		pass
 
 	"""
 	an Operand's primitive value should be returned when invoked
 	syntactical sugar:  x()  <: x.getValue()
 	@return double primitive value of self Operand
 	"""
-	def __invoke(self):
+	def __call__(self):
 
 		return self.getValue()
 
@@ -133,7 +134,7 @@ class Operand(Symbol ):
 	@return double the primitive value represented by self Operand
 	"""
 	def getValue(self):
-	pass
+		pass
 
 	"""
 	initialize symbol to given input

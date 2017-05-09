@@ -1,13 +1,14 @@
 
-
+import math, re
 #namespace App.Notations
 
-class Notation:
+class Notation(object):
 
 	@classmethod
 	def regex(cls):
+		pass
 
-trait Regex
+class Regex(Notation):
 
 	"""
 	@param string string to pattern-match, or None to return pattern
@@ -16,63 +17,61 @@ trait Regex
 	@classmethod
 	def regex(cls, string=None):
 		pattern = cls.pattern()
-		if( string === None ) return pattern
-		matches = {}
-		if  preg_match(pattern, string, matches) :
-			return matches
+		if( string is None ):
+			return pattern
+		matches = re.match(pattern, string)
+		if matches:
+			return matches.groups()
+		else:
+			return None
 
 	"""
 	@return string of regular expression to use
 	"""
 	@classmethod
 	def pattern(cls):
-		return "/^.""""
+		return "^.*$"
 
 
 
-trait Complex
+class Complex(Regex):
 
-	use Regex
 	@classmethod
 	def pattern(cls):
-		return '/^((-?[0-9.]+)([+-]))?(-?{0-9.}+)?i/'
+		return '^((-?[0-9.]+)([+-]))?(-?[0-9.]+)?i'
 
 
 
-trait PolarComplex
+class PolarComplex(Regex):
 
-	use Regex
 	@classmethod
 	def pattern(cls):
-		return '/^(-?[0-9.]+)cis(-?{0-9.}+)deg/'
+		return '^(-?[0-9.]+)cis(-?[0-9.]+)deg'
 
 
 
-trait Degrees
+class Degrees(Regex):
 
-	use Regex
 	@classmethod
 	def pattern(cls):
-		return '/^(-?{0-9.}+)deg/'
+		return '^(-?[0-9.]+)deg'
 
 	def degSymbol(self, number):
 
-		return rad2deg(number)."deg"
+		return math.degrees(number)+"deg"
 
 
 
-trait Alphabetic
+class Alphabetic(Regex):
 
-	use Regex
 	@classmethod
 	def pattern(cls):
-		return "/^[+-]?{^0-9}.""""
+		return "^[+-]?[^0-9]+"
 
 
 
-trait Base
+class Base(Regex):
 
-	use Regex
 	"""
 	@param integer numeric
 	@return string token representing the given integer in self base
@@ -80,53 +79,49 @@ trait Base
 	def baseSymbol(self, integer):
 
 		sign ='-'  if  ( integer < 0 ) else  ''
-		return sign.self.__class__.prefix.base_convert( abs(integer), 10, self.__class__.base )
+		return sign+self.__class__.prefix.base_convert( abs(integer), 10, self.__class__.base )
 
 
 	@classmethod
 	def pattern(cls):
 		chars = "0-"
-		if  self.__class__.base > 10 :
+		if  cls.base > 10 :
 
-			chars += "9A-".chr(54+self.__class__.base)
-			chars +=  "a-".chr(86+self.__class__.base)
+			chars += "9A-"+chr(54+cls.base)
+			chars +=  "a-"+chr(86+cls.base)
 
 		else:
 
-			chars += self.__class__.base - 1
+			chars += str(cls.base - 1)
 
-		return "/^(-?)(".self.__class__.prefix.")([chars]+)/"
+		return "^(-?)("+cls.prefix+")([chars]+)"
 
 
 
-trait Decimal
+class Decimal(Base):
 
-	use Base
-	prefix
+	prefix = ""
 	base = 10
 	@classmethod
 	def pattern(cls):
-		return '/^(-?{0-9.}+)/'
+		return '^(-?[0-9.]+)'
 
 
 
-trait Octal
+class Octal(Base):
 
-	use Base
 	prefix = "o"
 	base = 8
 
 
-trait Hexadecimal
+class Hexadecimal(Base):
 
-	use Base
 	prefix = "0x"
 	base = 16
 
 
-trait Binary
+class Binary(Base):
 
-	use Base
 	prefix = "b"
 	base = 2
 

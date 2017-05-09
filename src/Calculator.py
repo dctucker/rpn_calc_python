@@ -1,16 +1,16 @@
 
-
+import copy
 #namespace App
 
-import App.Operand
-import App.Operator
+from Symbol import Operand
+from Symbol import Operator
 
 class Calculator:
 
 	warning = False
 	previous_stack = None
 
-	def __init__(self, Stack stack):
+	def __init__(self, stack):
 
 		self.stack = stack
 
@@ -19,12 +19,12 @@ class Calculator:
 	enter a symbol into the calculator
 	push onto stack or apply the given operator
 	"""
-	def push(self, Symbol sym):
+	def push(self, sym):
 
 		self.warning = False
-		if  Operator in { t.__name__ for t in sym.__class__.mro() } :
+		if isinstance(sym,Operator):
 			return self.applyOperator( sym )
-		elif  Operand in { t.__name__ for t in sym.__class__.mro() } :
+		elif isinstance(sym,Operand):
 			return self.stack.push( sym )
 
 
@@ -32,7 +32,7 @@ class Calculator:
 	pop the stack and apply the operator, issue warnings if needed
 	@return integer or boolean, False if unsuccessful
 	"""
-	def applyOperator(self, Operator operator):
+	def applyOperator(self, operator):
 
 		self.backup()
 
@@ -45,7 +45,7 @@ class Calculator:
 
 		operands = self.stack.pop( operator.num_operands )
 		result = operator( *operands )
-		if  result === False :
+		if  result is False :
 
 			self.restore()
 			required_interface = operator.getRequiredInterface()
@@ -60,7 +60,7 @@ class Calculator:
 	"""
 	def display(self):
 
-		return "".self.stack
+		return str(self.stack)
 
 
 	"""
@@ -68,7 +68,7 @@ class Calculator:
 	"""
 	def backup(self):
 
-		self.previous_stack = clone self.stack
+		self.previous_stack = copy.copy( self.stack )
 
 
 	"""

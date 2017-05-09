@@ -2,19 +2,20 @@
 
 #namespace App.Operators
 
-import App.OperatorFactory
-import App.Operator
-import App.OperandFactory
-import App.Operand
-import App.Operands.Scalar
-import App.Operands.BaseScalar
-import App.Operands.Complex
-import App.Operands.PolarComplex
-import App.Notations.Degrees
-import App.Notations.Binary
-import App.Notations.Octal
-import App.Notations.Decimal
-import App.Notations.Hexadecimal
+from Factory import OperatorFactory
+from Symbol import Operator
+from Factory import OperandFactory
+from Symbol import Operand
+from Operands import Scalar
+from Operands import BaseScalar
+from Operands import Complex
+from Operands import PolarComplex
+from Notations import Base
+from Notations import Degrees
+from Notations import Binary
+from Notations import Octal
+from Notations import Decimal
+from Notations import Hexadecimal
 
 
 
@@ -24,23 +25,29 @@ class ComplexOperator:
 	pass
 class ScalarOperator :
 	pass
-interface UnaryScalar   extends ScalarOperator  {  def scalar(self, Scalar s):; }
-interface BinaryScalar  extends ScalarOperator  {  def scalar(self, Scalar s1,  s2):; }
-interface UnaryComplex  extends ComplexOperator {  def complex(self, Complex c):; }
-interface BinaryComplex extends ComplexOperator {  def complex(self, Complex c1,  c2):; }
+class UnaryScalar   ( ScalarOperator  ):
+	def scalar(self, s):
+		pass
+class BinaryScalar  ( ScalarOperator  ):
+	def scalar(self, s1,  s2):
+		pass
+class UnaryComplex  ( ComplexOperator ):
+	def complex(self, c):
+		pass
+class BinaryComplex ( ComplexOperator ):
+	def complex(self, c1,  c2):
+		pass
 class BinaryComplexScalar (ComplexOperator):
 
-	def scalarComplex(self, Scalar c,  s):
+	def scalarComplex(self, c,  s):
 		pass
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 		pass
 
 
 
-class UnaryOperator(Operator ):
-	implements = [ UnaryScalar
-]
+class UnaryOperator(Operator, UnaryScalar):
 	num_operands = 1
 
 	"""
@@ -48,7 +55,7 @@ class UnaryOperator(Operator ):
 	@param operands iterable of operand(s) - only first is used
 	@return Operand
 	"""
-	def __invoke(self, *operands):
+	def __call__(self, *operands):
 
 		operands = self.generate( operands )
 		
@@ -59,9 +66,7 @@ class UnaryOperator(Operator ):
 
 
 
-class BinaryOperator(Operator ):
-	implements = [ BinaryScalar
-]
+class BinaryOperator(Operator, BinaryScalar ):
 	num_operands = 2
 
 	"""
@@ -69,37 +74,33 @@ class BinaryOperator(Operator ):
 	@param operands iterable of operands
 	@return Operand
 	"""
-	def __invoke(self, *operands):
+	def __call__(self, *operands):
 
 		operands = self.generate( operands )
 
-		ret = operands.current()
-		for( operands.next(); operands.valid(); operands.next() )
-			ret = ret.operate( self, operands.current() )
+		for operand in operands:
+			ret = operand
+			break
+		for operand in operands:
+			ret = ret.operate( self, operand )
 		return ret
 
 
 
 # stack operations
-from Operator  import Operator 
-class Pop(Operator ):
-	implements = [ StackOperator
-]
+class Pop(Operator, StackOperator):
 	num_operands = 1
 	"""
 	incoming operand(s) will the raisen away.
 	@param operand Generator of items to discard
 	@return void
 	"""
-	def __invoke(self, *operand):
+	def __call__(self, *operand):
 
-		# NOP
+		pass # NOP
 
 
-from Operator  import Operator 
-class Push(Operator ):
-	implements = [ StackOperator
-]
+class Push(Operator, StackOperator):
 	num_operands = 1
 	"""
 	incoming operand will duplicated.
@@ -107,7 +108,7 @@ class Push(Operator ):
 	@return Generator
 	@codeCoverageIgnore
 	"""
-	def __invoke(self, *operands):
+	def __call__(self, *operands):
 
 		operands = self.generate(operands)
 		operand = operands.current()
@@ -118,91 +119,78 @@ class Push(Operator ):
 
 
 
-from Operator  import Operator 
-class Swap(Operator ):
-	implements = [ StackOperator
-]
+class Swap(Operator, StackOperator):
 	num_operands = 2
 	"""
 	@param @operands Generator of items
 	@return Generator of items in reverse order
 	"""
-	def __invoke(self, *operands):
+	def __call__(self, *operands):
 
 		operands = self.generate( operands )
-		yield fro array_reverse( list( operands ) )
+		for o in operands.reverse():
+			yield o
 
 
 
 
 # arithmetic operations
 
-trait AddComplex
+class AddComplex:
 
-	def complex(self, Complex c1,  c2):
+	def complex(self, c1,  c2):
 
-		return {
+		return [
 			self.scalar( c1.real, c2.real ),
 			self.scalar( c1.imag, c2.imag )
-		}
+		]
 
 
-from BinaryOperator  import BinaryOperator 
-class Plus(BinaryOperator ):
-	implements = [ BinaryComplex, BinaryComplexScalar
-]
-	use AddComplex
-	def scalar(self, Scalar s1,  s2):
+class Plus(BinaryOperator, BinaryComplex, BinaryComplexScalar, AddComplex):
+	def scalar(self, s1,  s2):
 
 		return s1() + s2()
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
 		return {
 			c.real() + s(),
 			c.imag(),
 		}
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
-		return new Complex({
+		return Complex([
 			s() + c.real(),
 			c.imag(),
-		})
+		])
 
-from BinaryOperator  import BinaryOperator 
-class Minus(BinaryOperator ):
-	implements = [ BinaryComplex, BinaryComplexScalar
-]
-	use AddComplex
-	def scalar(self, Scalar s1,  s2):
+class Minus(BinaryOperator, BinaryComplex, BinaryComplexScalar, AddComplex):
+	def scalar(self, s1,  s2):
 
 		return s1() - s2()
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
 		return {
 			c.real() - s(),
 			c.imag(),
 		}
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
-		return new Complex({
+		return Complex([
 			s() - c.real(),
 			- c.imag(),
-		})
+		])
 
 
-from BinaryOperator  import BinaryOperator 
-class Times(BinaryOperator ):
-	implements = [ BinaryComplex, BinaryComplexScalar
-]
-	def scalar(self, Scalar s1,  s2):
+class Times(BinaryOperator, BinaryComplex, BinaryComplexScalar):
+	def scalar(self, s1,  s2):
 
 		return s1() * s2()
 
-	def complex(self, Complex c1,  c2):
+	def complex(self, c1,  c2):
 
 		ac = c1.real() * c2.real()
 		bd = c1.imag() * c2.imag()
@@ -217,35 +205,32 @@ class Times(BinaryOperator ):
 	multiply both components of the given Complex by the given Scalar
 	@return data for constructing a Complex
 	"""
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
 		return {
 			self.scalar( s, c.real ),
 			self.scalar( s, c.imag )
 		}
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
-		return new Complex( self.complexScalar(c, s) ); # commutative
+		return Complex( self.complexScalar(c, s) ) # commutative
 
-from BinaryOperator  import BinaryOperator 
-class Divide(BinaryOperator ):
-	implements = [ BinaryComplex, BinaryComplexScalar
-]
+class Divide(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 	def __init__(self, symbol):
 
 		super(Operators, self).__init__(symbol)
 		self.times = OperatorFactory.make('*')
 		self.recip = OperatorFactory.make('1/x')
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		if  s2() == 0 :
 			return NAN
 		return self.times.scalar( s1, self.recip( s2 ) )
 
 
-	def complex(self, Complex c1,  c2):
+	def complex(self, c1,  c2):
 
 		ac = c1.real() * c2.real()
 		bc = c1.imag() * c2.real()
@@ -261,45 +246,41 @@ class Divide(BinaryOperator ):
 		}
 
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
 		return  self.times.scalarComplex( s, c.operate(self.recip) )
 
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
 		return self.times.complexScalar( c, self.recip( s ) )
 
-from UnaryOperator  import UnaryOperator 
-class Reciprocal(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Reciprocal(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		if  s() == 0 :
 			return NAN
 		return 1 / s()
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		xx = c.real(); xx *= xx
 		yy = c.imag(); yy *= yy
 		if  xx + yy == 0 :
 			return [NAN,NAN]
-		return {
+		return [
 			 c.real() / ( xx + yy ),
 			- c.imag() / ( xx + yy )
-		}
+		]
 
-from UnaryOperator  import UnaryOperator 
-class Negative(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Negative(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return - s()
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return {
 			- c.real(),
@@ -307,36 +288,35 @@ class Negative(UnaryOperator ):
 		}
 
 
-from BinaryOperator import BinaryOperator
 class Modulo(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		if  s2() == 0 :
 			return NAN
 		return fmod( s1(), s2() )
 
 
-from UnaryOperator import UnaryOperator
+
 class Intval(UnaryOperator):
 
-	def scalar(self, Scalar s1):
+	def scalar(self, s1):
 
 		return int(s1())
 
 
-from UnaryOperator import UnaryOperator
+
 class Frac(UnaryOperator):
 
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return s() - floor(s())
 
 
-from UnaryOperator import UnaryOperator
+
 class Round(UnaryOperator):
 
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return round(s())
 
@@ -345,30 +325,26 @@ class Round(UnaryOperator):
 
 # base conversion operations
 
-class BaseOperator(UnaryOperator):
+class BaseOperator(UnaryOperator, Base):
 
-	use .App.Notations.Base
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		string = self.baseSymbol( s() )
 		return OperandFactory.make( string )
 
 
-from BaseOperator { use Binary; } import BaseOperator { use Binary; }
-class Bin(BaseOperator { use Binary; }):
-class Oct(BaseOperator { use Octal; }):
-class Dec(BaseOperator { use Decimal; }):
-class Hex(BaseOperator { use Hexadecimal; }):
-from UnaryOperator  import UnaryOperator 
-class Dump(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+class Bin(BaseOperator, Binary): pass
+class Oct(BaseOperator, Octal): pass
+class Dec(BaseOperator, Decimal): pass
+class Hex(BaseOperator, Hexadecimal): pass
+
+class Dump(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		var_dump(s)
 		return s
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		var_dump(c)
 		return c
@@ -376,137 +352,122 @@ class Dump(UnaryOperator ):
 
 
 # bitwise operations
-from BinaryOperator import BinaryOperator
 class BAnd(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		return s1() & s2()
 
 
-from BinaryOperator import BinaryOperator
 class BOr(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		return s1() | s2()
 
 
-from BinaryOperator import BinaryOperator
 class BXor(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		return s1() ^ s2()
 
 
-from UnaryOperator import UnaryOperator
+
 class BNot(UnaryOperator):
 
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return s.bnot()
 
 
-from BinaryOperator import BinaryOperator
 class BShiftLeft(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		return s1() << s2()
 
 
-from BinaryOperator import BinaryOperator
 class BShiftRight(BinaryOperator):
 
-	def scalar(self, Scalar s1,  s2):
+	def scalar(self, s1,  s2):
 
 		return s1() >> s2()
 
 
 
 # exponentation operations
-from BinaryOperator  import BinaryOperator 
-class Power(BinaryOperator ):
-	implements = [ BinaryComplex, BinaryComplexScalar
-]
-	def scalar(self, Scalar s1,  s2):
+class Power(BinaryOperator, BinaryComplex, BinaryComplexScalar):
+	def scalar(self, s1,  s2):
 
 		return s1() ** s2(); # y^x, not x^y
 
-	def complex(self, Complex c1,  c2):
+	def complex(self, c1,  c2):
 
  		aabb = c1.real() ** 2 + c1.imag() ** 2
 		mag = aabb ** (c2.real() / 2) * exp( -c2.imag() * c1.arg() )
 		arg = c2.real() * c1.arg() + 0.5 * c2.imag() * log( aabb )
 		return PolarComplex(mag, arg)
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
-		return self.complex( c, new Complex( s, OperandFactory.make('0') ) )
+		return self.complex( c, Complex( s, OperandFactory.make('0') ) )
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
-		return self.complex( OperandFactory.make(s().'+0i'), c )
+		return self.complex( OperandFactory.make(s()+'+0i'), c )
 
-from UnaryOperator  import UnaryOperator 
-class Sqrt(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Sqrt(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		if  s() < 0 :
-			return new Complex(
+			return Complex(
 				0,
 				sqrt( abs( s() ) )
 			)
 		return sqrt( s() )
 
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		aa = c.real(); aa *= aa
 		bb = c.imag(); bb *= bb
 		sq = sqrt( aa + bb )
-		sign = c.imag() <: 0
-		return {
+		sign = c.imag() < 0
+		return [
 			sqrt( (   c.real() + sq ) / 2 ),
 			sqrt( ( - c.real() + sq ) / 2 ) * sign
-		}
+		]
 
 
-from UnaryOperator  import UnaryOperator 
-class Ln(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Ln(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return log( s() )
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
-		return {
+		return [
 			log( c.mag() ),
 			c.arg()
-		}
+		]
 
 
-from BinaryOperator  import BinaryOperator 
-class NthLog(BinaryOperator ):
-	implements = [ BinaryComplexScalar
-]
-	def scalar(self, Scalar s1,  s2):
+class NthLog(BinaryOperator, BinaryComplexScalar):
+	def scalar(self, s1,  s2):
 
 		return log( s1(), s2() )
 
-	def complexScalar(self, Complex c,  s):
+	def complexScalar(self, c,  s):
 
 		return {
 			log( c.mag() ) / log( s() ),
 			c.arg() / log( s() )
 		}
 
-	def scalarComplex(self, Scalar s,  c):
+	def scalarComplex(self, s,  c):
 
 		div = OperatorFactory.make('/')
 		ln = OperatorFactory.make('ln')
@@ -517,43 +478,34 @@ class NthLog(BinaryOperator ):
 # trigonometric operations
 
 class TrigOperator(UnaryOperator):
+	pass
 
-
-from TrigOperator  import TrigOperator 
-class Sin(TrigOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+class Sin(TrigOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return sin( s() )
 
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
-		return {
+		return [
 			sin( c.real() ) * cosh( c.imag() ),
 			cos( c.real() ) * sinh( c.imag() )
-		}
+		]
 
-from TrigOperator  import TrigOperator 
-class Cos(TrigOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+class Cos(TrigOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return cos( s() )
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
-		return {
+		return [
 			 cos( c.real() ) * cosh( c.imag() ),
 			- sin( c.real() ) * sinh( c.imag() )
-		}
+		]
 
-from TrigOperator  import TrigOperator 
-class Tan(TrigOperator ):
-	implements = [ UnaryComplex
-]
+class Tan(TrigOperator, UnaryComplex):
 	def __init__(self, symbol):
 
 		super(Operators, self).__init__(symbol)
@@ -561,98 +513,85 @@ class Tan(TrigOperator ):
 		self.sin = OperatorFactory.make('sin')
 		self.div = OperatorFactory.make('/')
 
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return tan( s() )
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return self.div( self.sin(c) , self.cos(c) )
 
 
-from TrigOperator import TrigOperator
-class Degree(TrigOperator):
+class Degree(TrigOperator, Degrees):
 
-	use Degrees
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return OperandFactory.make( self.degSymbol( s() ) )
 
 
-from TrigOperator import TrigOperator
 class Radian(TrigOperator):
 
-	def scalar(self, Scalar s):
+	def scalar(self, s):
 
 		return OperandFactory.make(s())
 
 
 
 # complex-oriented operations
-from UnaryOperator  import UnaryOperator 
-class Mag(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Mag(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return abs( s() )
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return OperandFactory.make(c.mag())
 
 
-from UnaryOperator  import UnaryOperator 
-class Arg(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Arg(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return atan2( 0, s() )
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return OperandFactory.make(c.arg())
 
 
-from UnaryOperator  import UnaryOperator 
-class Conj(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class Conj(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return s()
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
-		return {
+		return [
 			 c.real(),
 			- c.imag()
-		}
+		]
 
 
-from UnaryOperator  import UnaryOperator 
-class RealPart(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class RealPart(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return s()
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return c.real
 
 
-from UnaryOperator  import UnaryOperator 
-class ImagPart(UnaryOperator ):
-	implements = [ UnaryComplex
-]
-	def scalar(self, Scalar s):
+
+class ImagPart(UnaryOperator, UnaryComplex):
+	def scalar(self, s):
 
 		return 0
 
-	def complex(self, Complex c):
+	def complex(self, c):
 
 		return c.imag
 

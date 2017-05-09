@@ -1,11 +1,12 @@
 
-
 #namespace App
+from Factory import OperatorFactory, OperandFactory
+from Symbol import Symbol
 
 class Parser:
 
 	verbose = False
-	def __init__(self, Calculator calc):
+	def __init__(self, calc):
 
 		self.calculator = calc
 
@@ -16,8 +17,8 @@ class Parser:
 	"""
 	def parse(self, tokens):
 
-		if  is_string( tokens ) :
-			tokens = explode(' ', tokens)
+		if  isinstance( tokens, basestring ) :
+			tokens = tokens.split(' ')
 
 		#print implode(' ', tokens)."\n"
 
@@ -26,13 +27,13 @@ class Parser:
 			token = token.strip()
 			if  len( token ) == 0 :
 				continue
-			sym = self.resolveSymbol( token) .strip()
-			if  Symbol in { t.__name__ for t in sym.__class__.mro() } :
+			sym = self.resolveSymbol( token.strip() )
+			if isinstance(sym, Symbol):
 				self.calculator.push(sym)
 			else:
-				print "Warning: symbol not recognized: ".token."\n"
+				print "Warning: symbol not recognized: "+token+"\n"
 			if  self.calculator.warning :
-				print self.calculator.warning."\n"
+				print self.calculator.warning+"\n"
 			if  self.verbose :
 
 				print "" + sym + ".t"
@@ -49,7 +50,9 @@ class Parser:
 	"""
 	def resolveSymbol(self, string):
 
-		if  OperandFactory.isValid(string)) return OperandFactory.make(string:
-		if OperatorFactory.isValid(string)) return OperatorFactory.make(string:
+		if  OperandFactory.isValid(string):
+			return OperandFactory.make(string)
+		if OperatorFactory.isValid(string):
+			return OperatorFactory.make(string)
 
 

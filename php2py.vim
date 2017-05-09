@@ -437,5 +437,5 @@ let self=expand('%:t:r')
 " { \_... ]                               { \_... }
 %s/\({\)\(\_[^[}]\{-\}\)\(\]\)/{\2}/g
 
-:execute "w! ".substitute(expand('%:r'),"..\/rpn_calc\/","..\/rpn_calc_python\/","g").'.py'
+:execute "w! ".substitute(expand('%:r'),"..\/rpn_calc\/","..\/rpn_calc_python\/","g").'.phpy'
 :q
