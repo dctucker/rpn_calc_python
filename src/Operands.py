@@ -6,6 +6,13 @@ from Symbol import Operand
 from Symbol import Operator
 import Notations
 
+def is_numeric(x):
+	try:
+		float(x)
+		return True
+	except:
+		return False
+
 class Scalar(Operand):
 
 	"""
@@ -13,7 +20,9 @@ class Scalar(Operand):
 	"""
 	def getValue(self):
 
-		return float(self.symbol) if '.' in self.symbol else int(self.symbol)
+		if isinstance(self.symbol, basestring):
+			return float(self.symbol) if '.' in self.symbol else int(self.symbol)
+		return self.symbol
 
 
 	"""
@@ -68,7 +77,7 @@ class BaseScalar(Scalar):
 		base_width = len(self.symbol) - strlen(self.__class__.prefix)
 		bin_width = ceil(log(self.__class__.base ** base_width, 2))
 		mask = (( 1 << bin_width ) - 1)
-		base_class = get_class(self)
+		base_class = self.__class__.__name__
 		negated = base_convert( not self() & mask, 10, self.__class__.base )
 		symbol = self.__class__.prefix.str_pad( negated, base_width, '0', STR_PAD_LEFT)
 		return base_class( symbol )
@@ -136,7 +145,7 @@ class Complex(Operand, Notations.Complex):
 			self.real = DecScalar( real[0] )
 			self.imag = DecScalar( real[1] )
 
-		elif  is_string( real ) :
+		elif  isinstance( real, basestring ) :
 
 			self.setValue( real )
 
@@ -145,7 +154,7 @@ class Complex(Operand, Notations.Complex):
 			self.real = DecScalar( real )
 			self.imag = DecScalar( imag )
 
-		elif isinstance(other, Scalar):
+		elif isinstance(real, Scalar) and isinstance( img, Scalar ):
 
 			self.real = real
 			self.imag = imag
@@ -163,6 +172,7 @@ class Complex(Operand, Notations.Complex):
 	def setValue(self, string):
 
 		matches = self.__class__.regex(string)
+		#print matches
 		real = matches[2] or 0
 		imag =  ( matches[3] or '' ).replace('+','') + (matches[4] or 1)
 		self.real = DecScalar( real * 1 )

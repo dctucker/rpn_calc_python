@@ -21,7 +21,10 @@ class Regex(Notation):
 			return pattern
 		matches = re.match(pattern, string)
 		if matches:
-			return matches.groups()
+			ret = [string]
+			for m in matches.groups():
+				ret.append(m)
+			return ret
 		else:
 			return None
 
@@ -104,7 +107,7 @@ class Decimal(Base):
 	base = 10
 	@classmethod
 	def pattern(cls):
-		return '^(-?[0-9.]+)'
+		return '^(-?[0-9.]+)$'
 
 
 
