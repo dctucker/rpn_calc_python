@@ -44,11 +44,10 @@ class Scalar(Operand):
 
 			ret = op.scalar( self, other )
 
-
 		if isinstance(other, Operand):
 			return ret
 
-		scalar = Operands( ret )
+		scalar = self.__class__(ret)
 		scalar.setValue(ret)
 		return scalar
 
@@ -154,7 +153,7 @@ class Complex(Operand, Notations.Complex):
 			self.real = DecScalar( real )
 			self.imag = DecScalar( imag )
 
-		elif isinstance(real, Scalar) and isinstance( img, Scalar ):
+		elif isinstance(real, Scalar) and isinstance( imag, Scalar ):
 
 			self.real = real
 			self.imag = imag
@@ -182,23 +181,22 @@ class Complex(Operand, Notations.Complex):
 	def __str__(self):
 
 		if  self.real() == 0 :
-
 			if  self.imag() == 1 :
 				return "i"
 			elif  self.imag() == -1 :
 				return "-i"
 			else:
-				return self.imag+"i"
+				return str(self.imag)+"i"
 
 	
-		str = ""+self.real
-		if  self.imag == '1' :
-			str += "+i"
-		elif  self.imag == '-1' :
-			str += "-i"
+		ret = ""+str(self.real)
+		if str(self.imag) == '1' :
+			ret += "+i"
+		elif str(self.imag) == '-1' :
+			ret += "-i"
 		elif  self.imag() != 0 :
-			str += ('+' if self.imag() >= 0 else '')+self.imag+"i"
-		return str
+			ret += ('+' if self.imag() >= 0 else '')+self.imag+"i"
+		return ret
 
 
 	"""
@@ -219,7 +217,6 @@ class Complex(Operand, Notations.Complex):
 
 	def operate(self,   op, other = None ):
 
-		complex = False
 		if  op.num_operands == 1 :
 
 			if  op.implements('UnaryComplex') :
@@ -239,7 +236,6 @@ class Complex(Operand, Notations.Complex):
 			if  op.implements('BinaryComplexScalar') :
 
 				complex = op.complexScalar( self, other )
-
 
 
 		if   not  complex :

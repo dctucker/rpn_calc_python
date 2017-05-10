@@ -25,6 +25,8 @@ class Symbol(object):
 	"""
 	def implements(self, string):
 
+		return string in [ t.__name__ for t in self.__class__.mro() ]
+		"""
 		namespace = get_class(self)
 		names = namespace.split('.')
 		array_pop( names )
@@ -32,6 +34,7 @@ class Symbol(object):
 		interface = ".".join(names)
 		self.__class__.required_interface = string
 		return interface in { t.__name__ for t in self.__class__.mro() }
+		"""
 
 
 	def getRequiredInterface(self):

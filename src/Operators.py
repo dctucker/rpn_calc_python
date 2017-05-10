@@ -59,8 +59,10 @@ class UnaryOperator(Operator, UnaryScalar):
 
 		operands = self.generate( operands )
 		
-		ret = operands.current()
-		if  operands.valid() :
+		for operand in operands:
+			ret = operand
+			break
+		if ret:
 			ret = ret.operate( self )
 		return ret
 
@@ -153,10 +155,10 @@ class Plus(BinaryOperator, BinaryComplex, BinaryComplexScalar, AddComplex):
 
 	def complexScalar(self, c,  s):
 
-		return {
+		return [
 			c.real() + s(),
 			c.imag(),
-		}
+		]
 
 	def scalarComplex(self, s,  c):
 
@@ -172,10 +174,10 @@ class Minus(BinaryOperator, BinaryComplex, BinaryComplexScalar, AddComplex):
 
 	def complexScalar(self, c,  s):
 
-		return {
+		return [
 			c.real() - s(),
 			c.imag(),
-		}
+		]
 
 	def scalarComplex(self, s,  c):
 
@@ -196,10 +198,10 @@ class Times(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 		bd = c1.imag() * c2.imag()
 		ad = c1.real() * c2.imag()
 		bc = c1.imag() * c2.real()
-		return {
+		return [
 			ac - bd ,
 			ad + bc ,
-		}
+		]
 
 	"""
 	multiply both components of the given Complex by the given Scalar
@@ -207,10 +209,10 @@ class Times(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 	"""
 	def complexScalar(self, c,  s):
 
-		return {
+		return [
 			self.scalar( s, c.real ),
 			self.scalar( s, c.imag )
-		}
+		]
 
 	def scalarComplex(self, s,  c):
 
@@ -219,7 +221,7 @@ class Times(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 class Divide(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 	def __init__(self, symbol):
 
-		super(Operators, self).__init__(symbol)
+		super(Operator, self).__init__(symbol)
 		self.times = OperatorFactory.make('*')
 		self.recip = OperatorFactory.make('1/x')
 
@@ -240,10 +242,10 @@ class Divide(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 		dd = c2.imag(); dd *= dd
 		if  cc + dd == 0 :
 			return [NAN,NAN]
-		return {
+		return [
 			(ac + bd) / ( cc + dd ),
 			(bc - ad) / ( cc + dd )
-		}
+		]
 
 
 	def scalarComplex(self, s,  c):
@@ -261,7 +263,7 @@ class Reciprocal(UnaryOperator, UnaryComplex):
 
 		if  s() == 0 :
 			return NAN
-		return 1 / s()
+		return 1.0 / s()
 
 	def complex(self, c):
 
@@ -282,10 +284,10 @@ class Negative(UnaryOperator, UnaryComplex):
 
 	def complex(self, c):
 
-		return {
+		return [
 			- c.real(),
 			- c.imag()
-		}
+		]
 
 
 class Modulo(BinaryOperator):
@@ -462,10 +464,10 @@ class NthLog(BinaryOperator, BinaryComplexScalar):
 
 	def complexScalar(self, c,  s):
 
-		return {
+		return [
 			log( c.mag() ) / log( s() ),
 			c.arg() / log( s() )
-		}
+		]
 
 	def scalarComplex(self, s,  c):
 
