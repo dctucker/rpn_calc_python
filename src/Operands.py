@@ -1,5 +1,5 @@
 
-
+import math
 #namespace App.Operands
 
 from Symbol import Operand
@@ -21,7 +21,7 @@ class Scalar(Operand):
 	def getValue(self):
 
 		if isinstance(self.symbol, basestring):
-			return float(self.symbol) if '.' in self.symbol else int(self.symbol)
+			return float(self.symbol)
 		return self.symbol
 
 
@@ -55,6 +55,12 @@ class Scalar(Operand):
 	def bnot(self):
 
 		return not self()
+
+	def __str__(self):
+		if float(self.symbol).is_integer():
+			return str(int(self.symbol))
+		return str(self.symbol)
+
 
 
 
@@ -189,13 +195,13 @@ class Complex(Operand, Notations.Complex):
 				return str(self.imag)+"i"
 
 	
-		ret = ""+str(self.real)
+		ret = str(self.real)
 		if str(self.imag) == '1' :
 			ret += "+i"
 		elif str(self.imag) == '-1' :
 			ret += "-i"
 		elif  self.imag() != 0 :
-			ret += ('+' if self.imag() >= 0 else '')+self.imag+"i"
+			ret += ('+' if self.imag() >= 0 else '')+str(self.imag)+"i"
 		return ret
 
 
@@ -221,30 +227,29 @@ class Complex(Operand, Notations.Complex):
 
 			if  op.implements('UnaryComplex') :
 
-				complex = op.complex( self )
+				ret = op.complex( self )
 
 
 		elif isinstance(other, Complex):
 
 			if  op.implements('BinaryComplex') :
 
-				complex = op.complex( self, other )
+				ret = op.complex( self, other )
 
 
 		elif isinstance(other, Scalar):
 
 			if  op.implements('BinaryComplexScalar') :
 
-				complex = op.complexScalar( self, other )
+				ret = op.complexScalar( self, other )
 
-
-		if   not  complex :
+		if   not  ret :
 			return False
 
-		if isinstance(other, Operand):
-			return complex
+		if isinstance(ret, Operand):
+			return ret
 
-		return Complex( DecScalar(complex[0]), DecScalar(complex[1]) )
+		return Complex( DecScalar(ret[0]), DecScalar(ret[1]) )
 
 
 class PolarComplex(Complex, Notations.PolarComplex):

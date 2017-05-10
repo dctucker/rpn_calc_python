@@ -238,8 +238,8 @@ class Divide(BinaryOperator, BinaryComplex, BinaryComplexScalar):
 		bc = c1.imag() * c2.real()
 		ad = c1.real() * c2.imag()
 		bd = c1.imag() * c2.imag()
-		cc = c2.real(); cc *= cc
-		dd = c2.imag(); dd *= dd
+		cc = c2.real() ** 2
+		dd = c2.imag() ** 2
 		if  cc + dd == 0 :
 			return [NAN,NAN]
 		return [
@@ -267,12 +267,12 @@ class Reciprocal(UnaryOperator, UnaryComplex):
 
 	def complex(self, c):
 
-		xx = c.real(); xx *= xx
-		yy = c.imag(); yy *= yy
+		xx = c.real() ** 2
+		yy = c.imag() ** 2
 		if  xx + yy == 0 :
 			return [NAN,NAN]
 		return [
-			 c.real() / ( xx + yy ),
+			  c.real() / ( xx + yy ),
 			- c.imag() / ( xx + yy )
 		]
 

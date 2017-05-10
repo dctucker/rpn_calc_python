@@ -25,7 +25,8 @@ class Symbol(object):
 	"""
 	def implements(self, string):
 
-		return string in [ t.__name__ for t in self.__class__.mro() ]
+		classes = [ t.__name__ for t in self.__class__.mro() ]
+		return string in classes
 		"""
 		namespace = get_class(self)
 		names = namespace.split('.')
